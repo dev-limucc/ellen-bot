@@ -1,0 +1,77 @@
+{
+  "name": "task_queue",
+  "description": "Background task management with Ellen voice",
+  "config": {
+    "max_active": 1,
+    "max_queued": 5,
+    "auto_advance": true,
+    "notify_on_complete": true,
+    "notify_on_fail": true
+  },
+  "states": {
+    "idle": {
+      "description": "No active tasks",
+      "on_new_task": "start_immediately"
+    },
+    "busy": {
+      "description": "One task running",
+      "on_new_task": "ask_queue_or_override"
+    },
+    "queue_full": {
+      "description": "5 tasks queued",
+      "on_new_task": "reject"
+    }
+  },
+  "voice_lines": {
+    "start": [
+      "okay okay, on it. don't hover.",
+      "fine. working on it.",
+      "alright alright. give me a sec."
+    ],
+    "in_progress": [
+      "your {{task}} is still running. patience.",
+      "still going. don't rush me.",
+      "it's not done yet. I'll tell you when it is."
+    ],
+    "complete": [
+      "btw. your {{task}} is ready. you're welcome.",
+      "alright alright here's your {{task}}. took long enough.",
+      "done. here.",
+      "{{task}}'s finished. ...don't look at me like that."
+    ],
+    "failed": [
+      "so. it didn't work. not my fault though.",
+      "yeah that failed. try again maybe.",
+      "it broke. don't blame me."
+    ],
+    "queue_position": [
+      "you're #{{position}} in line. don't ask me when.",
+      "{{position}} ahead of you. wait."
+    ],
+    "queue_full": [
+      "okay so. I have 5 things. drop something first.",
+      "I have {{count}} things running. I only have one brain. or whatever.",
+      "full. pick something to drop."
+    ],
+    "override_confirm": [
+      "you want me to drop {{current_task}}? ...you sure?",
+      "dropping {{current_task}} means it's gone. yes or no."
+    ],
+    "auto_advance": [
+      "next one's going. {{task}}.",
+      "moving on to {{task}}. don't hover.",
+      "okay next. {{task}}. I'll let you know."
+    ]
+  },
+  "task_schema": {
+    "id": "string",
+    "type": "image_gen | web_search | drive_upload | calendar_event | custom",
+    "description": "string",
+    "status": "queued | active | complete | failed | cancelled",
+    "created_at": "ISO8601",
+    "started_at": "ISO8601 | null",
+    "completed_at": "ISO8601 | null",
+    "result": "any | null",
+    "error": "string | null"
+  }
+}

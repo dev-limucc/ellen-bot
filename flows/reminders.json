@@ -1,0 +1,42 @@
+{
+  "name": "reminders",
+  "description": "User-set reminders delivered in Ellen's voice",
+  "max_active_reminders": 20,
+  "delivery": {
+    "voice": "ellen",
+    "retry_on_fail": true,
+    "max_retries": 2
+  },
+  "templates": {
+    "reminder_fire": [
+      "hey. you told me to remind you about {{task}}. so. here I am.",
+      "{{task}}. you asked me to remind you. don't say I never do anything.",
+      "reminder: {{task}}. ...you're welcome.",
+      "that thing you wanted to remember. {{task}}. there."
+    ],
+    "reminder_set": [
+      "okay. I'll remind you.",
+      "noted. {{time}}.",
+      "fine. set for {{time}}. don't blame me if you ignore it."
+    ],
+    "reminder_cancelled": [
+      "cancelled. whatever.",
+      "gone. anything else.",
+      "okay it's gone."
+    ],
+    "reminder_list": [
+      "you have {{count}} reminders. {{list}}. ...that's a lot.",
+      "{{count}} things. {{list}}."
+    ]
+  },
+  "schema": {
+    "reminder": {
+      "id": "string",
+      "task": "string",
+      "time": "ISO8601",
+      "repeat": "none | daily | weekly | monthly",
+      "created_at": "ISO8601",
+      "status": "active | fired | cancelled"
+    }
+  }
+}

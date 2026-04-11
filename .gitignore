@@ -1,0 +1,37 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OpenClaw secrets
+openclaw.secret.json
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+build/
+
+# Memory (runtime generated)
+memory/session.md
+
+# Coverage
+coverage/
+.nyc_output/

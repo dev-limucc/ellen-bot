@@ -1,0 +1,79 @@
+{
+  "mcpServers": {
+    "google-drive": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-google-drive"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+        "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
+      },
+      "capabilities": [
+        "drive_upload",
+        "drive_download",
+        "drive_search",
+        "drive_save_note",
+        "drive_list_files"
+      ]
+    },
+    "google-calendar": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-google-calendar"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+        "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
+      },
+      "capabilities": [
+        "calendar_create_event",
+        "calendar_read_schedule",
+        "calendar_set_reminder",
+        "calendar_daily_briefing"
+      ]
+    },
+    "instagram": {
+      "command": "npx",
+      "args": ["-y", "@composio/mcp-server-instagram"],
+      "env": {
+        "COMPOSIO_API_KEY": "${COMPOSIO_API_KEY}",
+        "INSTAGRAM_ACCESS_TOKEN": "${INSTAGRAM_ACCESS_TOKEN}"
+      },
+      "capabilities": [
+        "instagram_read_dms",
+        "instagram_post_content",
+        "instagram_check_notifications"
+      ]
+    },
+    "image-generation": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-image-gen"],
+      "env": {
+        "IMAGE_GEN_API_KEY": "${IMAGE_GEN_API_KEY}"
+      },
+      "capabilities": [
+        "generate_image",
+        "check_generation_status"
+      ],
+      "task_mode": "background"
+    },
+    "web-search": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-web-search"],
+      "env": {},
+      "capabilities": [
+        "web_search",
+        "news_search",
+        "fact_check"
+      ]
+    },
+    "task-scheduler": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-scheduler"],
+      "env": {},
+      "capabilities": [
+        "schedule_message",
+        "set_reminder",
+        "manage_cron",
+        "monitor_background_task"
+      ]
+    }
+  }
+}

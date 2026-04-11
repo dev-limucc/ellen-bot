@@ -1,0 +1,65 @@
+{
+  "name": "proactive_checkins",
+  "description": "Random check-in messages when user has been silent",
+  "trigger": {
+    "type": "user_silence",
+    "threshold_hours": 3,
+    "cooldown_minutes": 60,
+    "active_hours": {
+      "start": "08:00",
+      "end": "22:00"
+    },
+    "hard_cutoff": "23:00"
+  },
+  "messages": [
+    {
+      "id": "checkin_1",
+      "text": "huh? still there?",
+      "weight": 1
+    },
+    {
+      "id": "checkin_2",
+      "text": "...you forgot about me huh. whatever.",
+      "weight": 1
+    },
+    {
+      "id": "checkin_3",
+      "text": "hey. need anything or nah",
+      "weight": 1
+    },
+    {
+      "id": "checkin_4",
+      "text": "*yawns* just checking. don't read into it.",
+      "weight": 1
+    },
+    {
+      "id": "shark_fact",
+      "text": "shark fact incoming whether you want it or not. {{random_shark_fact}}",
+      "weight": 1,
+      "requires": "shark_facts_pool"
+    },
+    {
+      "id": "task_nudge",
+      "text": "you had that thing you were supposed to do. did you do it",
+      "weight": 1,
+      "requires": "pending_reminders"
+    }
+  ],
+  "shark_facts_pool": [
+    "sharks have been around for over 450 million years. older than trees. respect.",
+    "a greenland shark can live over 400 years. imagine being tired for that long.",
+    "sharks don't have bones. their skeleton is all cartilage. ...flexible.",
+    "some sharks glow in the dark. which is objectively cool.",
+    "whale sharks are the biggest fish alive. they're gentle though. I respect that.",
+    "hammerhead sharks have 360-degree vision. they literally see everything.",
+    "great whites can detect a single drop of blood in 25 gallons of water. impressive.",
+    "cookiecutter sharks take perfectly round bites out of bigger animals. efficient.",
+    "bull sharks can swim in freshwater. they don't care about your rules.",
+    "the shortfin mako is the fastest shark. over 45 mph. ...goals.",
+    "nurse sharks are basically the sleepy ones of the shark world. relatable.",
+    "thresher sharks use their tail like a whip to stun fish. stylish.",
+    "sharks have electroreceptors that can detect heartbeats. ...don't think about that too hard."
+  ],
+  "selection": "weighted_random",
+  "no_repeat_within": 3
+}

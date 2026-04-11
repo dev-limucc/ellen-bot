@@ -1,0 +1,60 @@
+name: "Deploy Ellen"
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: "Deploy Ellen to production"
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run tests before deploy
+        run: npm test
+
+      - name: Deploy
+        id: deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: bash scripts/deploy.sh
+        continue-on-error: true
+
+      - name: Notify Telegram (success)
+        if: steps.deploy.outcome == 'success'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${OWNER_TELEGRAM_ID}" \
+            -d text="okay. deployed. you're welcome." \
+            -d parse_mode="Markdown"
+
+      - name: Notify Telegram (failure)
+        if: steps.deploy.outcome == 'failure'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${OWNER_TELEGRAM_ID}" \
+            -d text="so the deploy broke. not my fault. check logs." \
+            -d parse_mode="Markdown"
+
+      - name: Fail if deploy failed
+        if: steps.deploy.outcome == 'failure'
+        run: exit 1

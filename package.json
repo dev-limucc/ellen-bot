@@ -1,0 +1,38 @@
+{
+  "name": "ellen-bot",
+  "version": "1.0.0",
+  "description": "Ellen Joe AI assistant — cool, aloof, secretly helpful. Powered by OpenClaw with MCP tools.",
+  "main": "index.js",
+  "scripts": {
+    "start": "openclaw start --config config/openclaw.json",
+    "test": "node --test tests/test_personality.js tests/test_task_queue.js tests/test_deflections.js tests/test_tools.js tests/test_proactive.js",
+    "test:personality": "node --test tests/test_personality.js",
+    "test:queue": "node --test tests/test_task_queue.js",
+    "test:deflections": "node --test tests/test_deflections.js",
+    "test:tools": "node --test tests/test_tools.js",
+    "test:proactive": "node --test tests/test_proactive.js",
+    "lint": "eslint . --ext .js,.json",
+    "setup": "bash scripts/setup.sh",
+    "deploy": "bash scripts/deploy.sh"
+  },
+  "keywords": [
+    "ai",
+    "bot",
+    "telegram",
+    "openclaw",
+    "mcp",
+    "ellen-joe",
+    "zenless-zone-zero"
+  ],
+  "author": "@imnotyouraverage",
+  "license": "MIT",
+  "dependencies": {
+    "openclaw": "^0.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

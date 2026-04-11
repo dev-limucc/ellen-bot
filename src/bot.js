@@ -291,6 +291,33 @@ mood: tired. as usual.`);
       }
     }
 
+    // Send email triggers
+    const emailMatch = text.match(/(?:send|write|email|message|mail|msg)\s+(?:an?\s+)?(?:email|mail|message)?\s*(?:to\s+)?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\s+(?:and\s+)?(?:say|saying|tell|with|that|:)?\s*(.+)/i);
+    if (!emailMatch) {
+      // Try reverse pattern: "message/email someone@email and say X"
+      const emailMatch2 = text.match(/(?:message|email|mail|write to)\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\s+(?:and\s+)?(?:say|saying|tell|with|that|:)?\s*(.+)/i);
+      if (emailMatch2) {
+        try {
+          const to = emailMatch2[1].trim();
+          const body = emailMatch2[2].trim();
+          const result = await this.tools.gmail.sendEmail(to, 'Message from Ellen', body);
+          return { tool: 'gmail_send', result: { ...result, to, body } };
+        } catch (err) {
+          return { tool: 'gmail_send', result: { success: false, error: err.message } };
+        }
+      }
+    }
+    if (emailMatch) {
+      try {
+        const to = emailMatch[1].trim();
+        const body = emailMatch[2].trim();
+        const result = await this.tools.gmail.sendEmail(to, 'Message from Ellen', body);
+        return { tool: 'gmail_send', result: { ...result, to, body } };
+      } catch (err) {
+        return { tool: 'gmail_send', result: { success: false, error: err.message } };
+      }
+    }
+
     // Calendar triggers
     const calTriggers = ['my schedule', 'my calendar', 'what do i have today',
       'any meetings', 'any events', "today's schedule", 'what\'s on my calendar',

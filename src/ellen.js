@@ -222,6 +222,8 @@ class Ellen {
         const files = result.files.map(f => `- ${f.name}`).join('\n');
         summary = `found ${result.count} files:\n${files}`;
       }
+    } else if (toolName === 'gmail_send') {
+      summary = result.success ? `email sent to ${result.to}. said: "${result.body}"` : `couldn't send the email. ${result.error || ''}`;
     } else if (toolName === 'drive_save') {
       summary = result.success ? `saved as "${result.name}" to drive.` : 'save failed.';
     } else if (toolName === 'web_search' && result.results) {

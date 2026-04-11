@@ -26,9 +26,7 @@
   ],
   "author": "@imnotyouraverage",
   "license": "MIT",
-  "dependencies": {
-    "openclaw": "^0.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "eslint": "^9.0.0"
   },

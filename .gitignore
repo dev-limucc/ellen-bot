@@ -13,6 +13,9 @@ npm-debug.log*
 # OpenClaw secrets
 openclaw.secret.json
 
+# Google OAuth token
+.google-token.json
+
 # Python
 __pycache__/
 *.pyc

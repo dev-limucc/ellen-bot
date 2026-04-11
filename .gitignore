@@ -16,6 +16,9 @@ openclaw.secret.json
 # Google OAuth token
 .google-token.json
 
+# Reminders data
+.reminders.json
+
 # Python
 __pycache__/
 *.pyc

@@ -187,6 +187,12 @@ mood: tired. as usual.`);
     if (this.googleAuth.isAuthenticated()) {
       this.tools.initGoogle(this.googleAuth);
     }
+    // Init reminders with callback to send to owner
+    this.tools.initReminders((msg) => {
+      this.bot.sendMessage(this.ownerId, msg).catch(err => {
+        console.error('Reminder send error:', err.message);
+      });
+    });
     this.ellen.setTools(this.tools);
     console.log('  Telegram bot connected');
   }

@@ -226,6 +226,54 @@ const TOOLS = [
       required: ['prompt']
     },
     execute: async (tools, params) => tools.imageGen.generate(params.prompt)
+  },
+
+  // ═══ Reminders ═══
+  {
+    name: 'reminder_set',
+    description: 'Set a reminder for the user at a specific time. Use when user says "remind me", "don\'t let me forget", "wake me up", or mentions doing something at a specific time. Parse relative times: "in 5 minutes" = now + 5min, "in 2 hours" = now + 2h, "tomorrow at 9am" = next day 09:00.',
+    parameters: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'What to remind about' },
+        time: { type: 'string', description: 'ISO 8601 datetime for when to fire the reminder' },
+        repeat: { type: 'string', description: 'Repeat frequency: none, daily, weekly, monthly (default: none)' }
+      },
+      required: ['task', 'time']
+    },
+    execute: async (tools, params) => tools.reminders.setReminder(params.task, params.time, params.repeat || 'none')
+  },
+  {
+    name: 'reminder_list',
+    description: 'List all active reminders. Use when user asks "what reminders do I have" or "show my reminders".',
+    parameters: { type: 'object', properties: {} },
+    execute: async (tools) => tools.reminders.listReminders()
+  },
+  {
+    name: 'reminder_cancel',
+    description: 'Cancel a reminder by its position number. Use when user says "cancel reminder 2" or "remove that reminder".',
+    parameters: {
+      type: 'object',
+      properties: {
+        position: { type: 'number', description: 'Reminder position (1-based)' }
+      },
+      required: ['position']
+    },
+    execute: async (tools, params) => tools.reminders.cancelReminder(params.position)
+  },
+
+  // ═══ Utilities ═══
+  {
+    name: 'get_current_time',
+    description: 'Get the current date and time. Use when user asks "what time is it", "what day is it", or you need to calculate relative times for reminders.',
+    parameters: { type: 'object', properties: {} },
+    execute: async () => ({
+      success: true,
+      datetime: new Date().toISOString(),
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    })
   }
 ];
 
@@ -239,6 +287,7 @@ function getToolDefinitions(availableTools) {
       if (t.name.startsWith('gmail_') && !availableTools.includes('gmail')) return false;
       if (t.name.startsWith('calendar_') && !availableTools.includes('calendar')) return false;
       if (t.name.startsWith('drive_') && !availableTools.includes('drive')) return false;
+      if (t.name.startsWith('reminder_') && !availableTools.includes('reminders')) return false;
       return true;
     })
     .map(t => ({

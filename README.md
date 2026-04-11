@@ -1,6 +1,6 @@
 # 🦈 Ellen Bot
 
-![Tests](https://github.com/imnotyouraverage/ellen-bot/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/dev-limucc/ellen-bot/actions/workflows/test.yml/badge.svg)
 
 **Ellen Joe** — a cool, aloof, secretly helpful AI assistant from Zenless Zone Zero.
 Powered by OpenClaw with MCP tool integration. Connected to Telegram.
@@ -19,7 +19,7 @@ She'll help you with your stuff. Just don't expect her to be excited about it.
 
 ```bash
 # Clone
-git clone https://github.com/imnotyouraverage/ellen-bot.git
+git clone https://github.com/dev-limucc/ellen-bot.git
 cd ellen-bot
 
 # One-command setup

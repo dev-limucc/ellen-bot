@@ -8,7 +8,6 @@ class ModelRouter {
     this.gemini = process.env.GEMINI_API_KEY ? new GeminiClient(process.env.GEMINI_API_KEY) : null;
     this.claude = process.env.ANTHROPIC_API_KEY ? new ClaudeClient(process.env.ANTHROPIC_API_KEY) : null;
 
-    // Log available models
     const available = [];
     if (this.glm) available.push('GLM (primary)');
     if (this.gemini) available.push('Gemini Flash');
@@ -22,14 +21,12 @@ class ModelRouter {
   }
 
   /**
-   * Route to the appropriate model.
-   * Priority: GLM (Coding Plan) → Gemini Flash → Claude Haiku
-   * Sensitive topics: Claude Haiku (if available), else Gemini
+   * Chat with tool support.
+   * Returns { type: 'text', content } or { type: 'tool_calls', tool_calls }
    */
   async chat(messages, options = {}) {
-    const { useFallback = false } = options;
+    const { useFallback = false, tools } = options;
 
-    // If sensitive topic, prefer Claude or Gemini over GLM
     if (useFallback) {
       if (this.claude) {
         try { return await this.claude.chat(messages); }
@@ -41,31 +38,28 @@ class ModelRouter {
       }
     }
 
-    // Primary: GLM via Coding Plan
+    // Primary: GLM (supports function calling)
     if (this.glm) {
       try {
-        return await this.glm.chat(messages);
+        return await this.glm.chat(messages, { tools });
       } catch (err) {
         console.error('GLM primary error:', err.message);
       }
     }
 
-    // Fallback: Gemini
+    // Fallbacks don't support tool calling, so just text
     if (this.gemini) {
       try {
-        return await this.gemini.chat(messages);
-      } catch (err) {
-        console.error('Gemini error:', err.message);
-      }
+        const r = await this.gemini.chat(messages);
+        return { type: 'text', content: r };
+      } catch (err) { console.error('Gemini error:', err.message); }
     }
 
-    // Last resort: Claude
     if (this.claude) {
       try {
-        return await this.claude.chat(messages);
-      } catch (err) {
-        console.error('Claude error:', err.message);
-      }
+        const r = await this.claude.chat(messages);
+        return { type: 'text', content: r };
+      } catch (err) { console.error('Claude error:', err.message); }
     }
 
     throw new Error('No AI model available');

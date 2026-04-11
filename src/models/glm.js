@@ -8,13 +8,25 @@ class GLMClient {
   }
 
   async chat(messages, options = {}) {
-    const body = JSON.stringify({
+    const body = {
       model: options.model || 'glm-4.5-air',
       messages,
       max_tokens: options.maxTokens || 2048,
       temperature: options.temperature || 0.8,
       top_p: 0.9
-    });
+    };
+
+    // Add tools if provided
+    if (options.tools && options.tools.length > 0) {
+      body.tools = options.tools;
+      body.tool_choice = 'auto';
+    }
+
+    return this._request(body);
+  }
+
+  async _request(body) {
+    const data = JSON.stringify(body);
 
     return new Promise((resolve, reject) => {
       const url = new URL(GLM_API_URL);
@@ -25,20 +37,33 @@ class GLMClient {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Length': Buffer.byteLength(body)
+          'Content-Length': Buffer.byteLength(data)
         }
       }, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
+        let responseData = '';
+        res.on('data', chunk => responseData += chunk);
         res.on('end', () => {
           try {
-            const json = JSON.parse(data);
+            const json = JSON.parse(responseData);
             if (json.error) {
               reject(new Error(json.error.message || 'GLM API error'));
               return;
             }
             if (json.choices && json.choices[0]) {
-              resolve(json.choices[0].message.content);
+              const choice = json.choices[0];
+              // Return full message object when tool calls are present
+              if (choice.message.tool_calls) {
+                resolve({
+                  type: 'tool_calls',
+                  tool_calls: choice.message.tool_calls,
+                  content: choice.message.content
+                });
+              } else {
+                resolve({
+                  type: 'text',
+                  content: choice.message.content
+                });
+              }
             } else {
               reject(new Error('No response from GLM'));
             }
@@ -53,7 +78,7 @@ class GLMClient {
         req.destroy();
         reject(new Error('GLM request timeout'));
       });
-      req.write(body);
+      req.write(data);
       req.end();
     });
   }

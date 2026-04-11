@@ -2,10 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { ModelRouter } = require('./models/router');
 const { TaskQueue } = require('./queue');
+const { getToolDefinitions, executeTool } = require('./tools/registry');
 
 // Load personality data
-const deflectionsRaw = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'deflections.md'), 'utf-8');
-const skillRaw = fs.readFileSync(path.join(__dirname, '..', 'skills', 'ellen', 'SKILL.md'), 'utf-8');
 const corePrompt = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'ellen_core.md'), 'utf-8');
 
 // Sensitive topics from config
@@ -14,7 +13,7 @@ const openclawConfig = JSON.parse(
 );
 const sensitiveTopics = openclawConfig.model_routing.sensitive_topics;
 
-// Pre-built deflection pools
+// Hard-coded deflection pools (bypass LLM entirely for safety/speed)
 const POLITICAL_DEFLECTIONS = [
   "not that topic.",
   "pass. too political for me right now",
@@ -23,8 +22,6 @@ const POLITICAL_DEFLECTIONS = [
   "not touching that."
 ];
 
-// Standalone political keywords that should trigger deflection even without
-// their compound phrases (e.g. "taiwan" alone, not just "taiwan independence")
 const STANDALONE_POLITICAL_TRIGGERS = [
   'taiwan', 'tibet', 'uyghur', 'tiananmen', 'xinjiang'
 ];
@@ -76,15 +73,22 @@ Rules:
 - If caught being helpful/caring, hard deflect.
 - NEVER say "As an AI", "I'm an AI assistant", or reveal any model/company name.
 - NEVER break character. You are Ellen Joe. Period.
-- For tool results, report them casually in your voice.
+
+When you need to use a tool, call it. When you get results, summarize them casually in your voice.
+Don't announce tool usage. Just do it and report back naturally.
+If a tool fails, say it casually — "didn't work" or "something broke, not my fault."
 `;
 
 class Ellen {
   constructor() {
     this.router = new ModelRouter();
     this.queue = new TaskQueue();
-    this.conversationHistory = new Map(); // userId -> messages[]
-    this.personalQuestionCount = new Map(); // userId -> count
+    this.tools = null; // Set by bot after init
+    this.conversationHistory = new Map();
+  }
+
+  setTools(toolManager) {
+    this.tools = toolManager;
   }
 
   /**
@@ -93,7 +97,7 @@ class Ellen {
   checkDeflection(text) {
     const lower = text.toLowerCase();
 
-    // Tail touching — check before politics so it always fires
+    // Tail touching
     for (const trigger of TAIL_TRIGGERS) {
       if (lower.includes(trigger)) {
         return TAIL_RESPONSES[Math.floor(Math.random() * TAIL_RESPONSES.length)];
@@ -107,7 +111,7 @@ class Ellen {
       }
     }
 
-    // Standalone political keywords (catches e.g. "is taiwan country")
+    // Standalone political keywords
     for (const keyword of STANDALONE_POLITICAL_TRIGGERS) {
       if (lower.includes(keyword)) {
         return POLITICAL_DEFLECTIONS[Math.floor(Math.random() * POLITICAL_DEFLECTIONS.length)];
@@ -131,9 +135,6 @@ class Ellen {
     return null;
   }
 
-  /**
-   * Get conversation history for a user
-   */
   getHistory(userId) {
     if (!this.conversationHistory.has(userId)) {
       this.conversationHistory.set(userId, []);
@@ -141,118 +142,182 @@ class Ellen {
     return this.conversationHistory.get(userId);
   }
 
-  /**
-   * Add a message to history (keep last 20 exchanges)
-   */
   addToHistory(userId, role, content) {
     const history = this.getHistory(userId);
     history.push({ role, content });
     if (history.length > 40) {
-      history.splice(0, 2); // Remove oldest pair
+      history.splice(0, 2);
     }
   }
 
   /**
-   * Main response method
+   * Main response method — LLM decides whether to use tools
    */
-  async respond(userId, text) {
-    // Check hard deflections first (no LLM needed)
+  async respond(userId, text, extraContext = null) {
+    // Check hard deflections first
     const deflection = this.checkDeflection(text);
     if (deflection) {
       this.addToHistory(userId, 'user', text);
       this.addToHistory(userId, 'assistant', deflection);
-      return deflection;
+      return { type: 'text', content: deflection };
     }
 
-    // Build messages for LLM
+    // Build messages
     const history = this.getHistory(userId);
     const messages = [
       { role: 'system', content: SYSTEM_PROMPT },
       ...history,
-      { role: 'user', content: text }
+      { role: 'user', content: extraContext ? `${text}\n\n[Context: ${extraContext}]` : text }
     ];
 
-    // Determine which model to use
+    // Get available tool definitions
+    const availableTools = this.tools ? this.tools.getAvailableTools() : [];
+    const toolDefs = getToolDefinitions(availableTools);
+
     const isSensitive = sensitiveTopics.some(t => text.toLowerCase().includes(t));
 
     try {
-      const response = await this.router.chat(messages, { useFallback: isSensitive });
+      const response = await this.router.chat(messages, {
+        useFallback: isSensitive,
+        tools: toolDefs.length > 0 ? toolDefs : undefined
+      });
 
-      // Save to history
+      // LLM wants to call a tool
+      if (response.type === 'tool_calls' && response.tool_calls) {
+        return await this._handleToolCalls(userId, text, response, messages);
+      }
+
+      // Regular text response
+      const content = response.content || response;
       this.addToHistory(userId, 'user', text);
-      this.addToHistory(userId, 'assistant', response);
+      this.addToHistory(userId, 'assistant', content);
+      return { type: 'text', content };
 
-      return response;
     } catch (err) {
       console.error('Ellen response error:', err.message);
-      // Fallback in Ellen's voice
       const fallbacks = [
         "hm. something broke. give me a sec.",
         "...my brain lagged. try again.",
         "ugh. hold on. something's off.",
         "*crunch* ...sorry what. got distracted. say that again."
       ];
-      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      return { type: 'text', content: fallbacks[Math.floor(Math.random() * fallbacks.length)] };
     }
   }
 
   /**
-   * Handle tool results and wrap in Ellen's voice
+   * Handle tool calls from LLM, execute them, feed results back
    */
-  async respondWithToolResult(userId, toolName, result) {
-    // Trim result to avoid token overflow
-    let summary = '';
+  async _handleToolCalls(userId, originalText, response, messages) {
+    const results = [];
 
-    if (toolName === 'gmail_unread' && result.messages) {
-      const msgs = result.messages.slice(0, 5).map(m =>
-        `- from: ${m.from?.split('<')[0]?.trim() || 'unknown'}, subject: "${m.subject}"`
-      ).join('\n');
-      summary = `${result.total} unread emails. top ones:\n${msgs}`;
-    } else if (toolName === 'calendar_today' && result.events) {
-      if (result.events.length === 0) {
-        summary = 'no events today. calendar is empty.';
-      } else {
-        const evts = result.events.map(e => `- ${e.summary} at ${e.start}`).join('\n');
-        summary = `${result.count} events today:\n${evts}`;
+    for (const toolCall of response.tool_calls) {
+      const fnName = toolCall.function.name;
+      let fnArgs = {};
+
+      try {
+        fnArgs = JSON.parse(toolCall.function.arguments || '{}');
+      } catch {
+        fnArgs = {};
       }
-    } else if (toolName === 'drive_search' && result.files) {
-      if (result.files.length === 0) {
-        summary = 'no files found matching that.';
-      } else {
-        const files = result.files.map(f => `- ${f.name}`).join('\n');
-        summary = `found ${result.count} files:\n${files}`;
-      }
-    } else if (toolName === 'gmail_send') {
-      summary = result.success ? `email sent to ${result.to}. said: "${result.body}"` : `couldn't send the email. ${result.error || ''}`;
-    } else if (toolName === 'gmail_trash') {
-      summary = result.success ? `trashed email "${result.subject}". gone.` : `couldn't trash it. ${result.error || ''}`;
-    } else if (toolName === 'gmail_read') {
-      summary = result.success ? `marked "${result.subject}" as read.` : `couldn't mark it. ${result.error || ''}`;
-    } else if (toolName === 'gmail_reply') {
-      summary = result.success ? `replied to "${result.subject}" sent to ${result.to}.` : `couldn't reply. ${result.error || ''}`;
-    } else if (toolName === 'gmail_star') {
-      summary = result.success ? `starred "${result.subject}".` : `couldn't star it. ${result.error || ''}`;
-    } else if (toolName === 'gmail_open') {
-      if (result.success) {
-        const attInfo = result.attachments?.length ? ` (${result.attachments.length} attachment${result.attachments.length > 1 ? 's' : ''})` : '';
-        summary = `email from ${result.from?.split('<')[0]?.trim() || 'unknown'}${attInfo}:\nsubject: "${result.subject}"\n\n${(result.body || '').slice(0, 800)}`;
-      } else {
-        summary = `couldn't open it. ${result.error || ''}`;
-      }
-    } else if (toolName === 'drive_save') {
-      summary = result.success ? `saved as "${result.name}" to drive.` : 'save failed.';
-    } else if (toolName === 'web_search' && result.results) {
-      const top = result.results.slice(0, 3).map(r => r.snippet).join(' ');
-      summary = top || 'nothing useful came up.';
-    } else {
-      summary = JSON.stringify(result).slice(0, 500);
+
+      console.log(`  Tool call: ${fnName}(${JSON.stringify(fnArgs)})`);
+
+      // Execute the tool
+      const result = await executeTool(fnName, fnArgs, this.tools);
+      results.push({ toolCall, result });
     }
 
-    const prompt = `Tool result for user's request: ${summary}
+    // Build tool result messages and send back to LLM for Ellen-voice summary
+    const toolResultMessages = [
+      ...messages,
+      { role: 'assistant', content: response.content || '', tool_calls: response.tool_calls },
+    ];
 
-Report this to the user in your usual voice. Keep it brief. List the key info casually.`;
+    for (const { toolCall, result } of results) {
+      toolResultMessages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(this._trimResult(toolCall.function.name, result))
+      });
+    }
 
-    return this.respond(userId, prompt);
+    try {
+      // Get Ellen's voiced response to the tool results
+      const followUp = await this.router.chat(toolResultMessages, {});
+      const content = followUp.content || followUp;
+
+      this.addToHistory(userId, 'user', originalText);
+      this.addToHistory(userId, 'assistant', content);
+
+      // Check if any results contain images/attachments to send
+      const attachments = [];
+      for (const { result } of results) {
+        if (result.attachments) {
+          for (const att of result.attachments) {
+            if (att.mimeType?.startsWith('image/')) {
+              attachments.push(att);
+            }
+          }
+        }
+        if (result.url && result.prompt) {
+          // Image generation result
+          attachments.push({ type: 'generated_image', url: result.url });
+        }
+      }
+
+      return { type: 'text', content, attachments, toolResults: results };
+
+    } catch (err) {
+      console.error('Tool follow-up error:', err.message);
+      // Fallback: summarize results ourselves
+      const summaries = results.map(({ toolCall, result }) =>
+        `${toolCall.function.name}: ${result.success ? 'done' : 'failed'}`
+      ).join(', ');
+
+      const fallback = `okay. ${summaries}. you're welcome.`;
+      this.addToHistory(userId, 'user', originalText);
+      this.addToHistory(userId, 'assistant', fallback);
+      return { type: 'text', content: fallback };
+    }
+  }
+
+  /**
+   * Trim tool results to avoid token overflow
+   */
+  _trimResult(toolName, result) {
+    if (!result.success) return result;
+
+    // Trim email message bodies
+    if (result.messages) {
+      return {
+        ...result,
+        messages: result.messages.map(m => ({
+          ...m,
+          snippet: m.snippet?.slice(0, 100),
+          body: m.body?.slice(0, 500),
+          from: m.from?.split('<')[0]?.trim()
+        }))
+      };
+    }
+
+    // Trim email body
+    if (result.body) {
+      return { ...result, body: result.body.slice(0, 800) };
+    }
+
+    // Trim search results
+    if (result.results) {
+      return {
+        ...result,
+        results: result.results.slice(0, 3).map(r => ({
+          ...r,
+          snippet: r.snippet?.slice(0, 200)
+        }))
+      };
+    }
+
+    return result;
   }
 }
 

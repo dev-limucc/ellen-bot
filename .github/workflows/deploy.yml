@@ -1,8 +1,9 @@
 name: "Deploy Ellen"
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:  # Manual trigger only — enable push trigger when Railway is set up
+  # push:
+  #   branches: [main]
 
 jobs:
   deploy:

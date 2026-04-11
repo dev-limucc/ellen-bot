@@ -224,6 +224,21 @@ class Ellen {
       }
     } else if (toolName === 'gmail_send') {
       summary = result.success ? `email sent to ${result.to}. said: "${result.body}"` : `couldn't send the email. ${result.error || ''}`;
+    } else if (toolName === 'gmail_trash') {
+      summary = result.success ? `trashed email "${result.subject}". gone.` : `couldn't trash it. ${result.error || ''}`;
+    } else if (toolName === 'gmail_read') {
+      summary = result.success ? `marked "${result.subject}" as read.` : `couldn't mark it. ${result.error || ''}`;
+    } else if (toolName === 'gmail_reply') {
+      summary = result.success ? `replied to "${result.subject}" sent to ${result.to}.` : `couldn't reply. ${result.error || ''}`;
+    } else if (toolName === 'gmail_star') {
+      summary = result.success ? `starred "${result.subject}".` : `couldn't star it. ${result.error || ''}`;
+    } else if (toolName === 'gmail_open') {
+      if (result.success) {
+        const attInfo = result.attachments?.length ? ` (${result.attachments.length} attachment${result.attachments.length > 1 ? 's' : ''})` : '';
+        summary = `email from ${result.from?.split('<')[0]?.trim() || 'unknown'}${attInfo}:\nsubject: "${result.subject}"\n\n${(result.body || '').slice(0, 800)}`;
+      } else {
+        summary = `couldn't open it. ${result.error || ''}`;
+      }
     } else if (toolName === 'drive_save') {
       summary = result.success ? `saved as "${result.name}" to drive.` : 'save failed.';
     } else if (toolName === 'web_search' && result.results) {

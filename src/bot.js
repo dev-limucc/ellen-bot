@@ -291,6 +291,100 @@ mood: tired. as usual.`);
       }
     }
 
+    // Delete/trash email triggers
+    const deleteMatch = lower.match(/(?:delete|trash|remove)\s+(?:the\s+)?(?:(\d+)(?:st|nd|rd|th)?\s+)?(?:email|mail|message)/);
+    if (deleteMatch) {
+      const idx = parseInt(deleteMatch[1] || '1');
+      const msg = this.tools.gmail.getLastMessageByIndex(idx);
+      if (msg) {
+        try {
+          const result = await this.tools.gmail.trashMessage(msg.id);
+          return { tool: 'gmail_trash', result: { ...result, subject: msg.subject } };
+        } catch (err) {
+          return { tool: 'gmail_trash', result: { success: false, error: err.message } };
+        }
+      }
+      return { tool: 'gmail_trash', result: { success: false, error: 'no email to delete. check your mail first.' } };
+    }
+
+    // Mark as read triggers
+    const readMatch = lower.match(/(?:mark)\s+(?:the\s+)?(?:(\d+)(?:st|nd|rd|th)?\s+)?(?:email|mail|message)?\s*(?:as\s+)?read/);
+    if (readMatch) {
+      const idx = parseInt(readMatch[1] || '1');
+      const msg = this.tools.gmail.getLastMessageByIndex(idx);
+      if (msg) {
+        try {
+          const result = await this.tools.gmail.markAsRead(msg.id);
+          return { tool: 'gmail_read', result: { ...result, subject: msg.subject } };
+        } catch (err) {
+          return { tool: 'gmail_read', result: { success: false, error: err.message } };
+        }
+      }
+      return { tool: 'gmail_read', result: { success: false, error: 'which email. check your mail first.' } };
+    }
+
+    // Reply to email triggers
+    const replyMatch = lower.match(/(?:reply|respond)\s+(?:to\s+)?(?:the\s+)?(?:(\d+)(?:st|nd|rd|th)?\s+)?(?:email|mail|message)?\s*(?:and\s+)?(?:say|with|that|:)\s*(.+)/);
+    if (replyMatch) {
+      const idx = parseInt(replyMatch[1] || '1');
+      const replyBody = replyMatch[2].trim();
+      const msg = this.tools.gmail.getLastMessageByIndex(idx);
+      if (msg) {
+        try {
+          const result = await this.tools.gmail.replyToMessage(msg.id, replyBody);
+          return { tool: 'gmail_reply', result };
+        } catch (err) {
+          return { tool: 'gmail_reply', result: { success: false, error: err.message } };
+        }
+      }
+      return { tool: 'gmail_reply', result: { success: false, error: 'which email. check your mail first.' } };
+    }
+
+    // Open/read specific email
+    const openMatch = lower.match(/(?:open|read|show)\s+(?:the\s+)?(?:(\d+)(?:st|nd|rd|th)?\s+)?(?:email|mail|message)/);
+    if (openMatch) {
+      const idx = parseInt(openMatch[1] || '1');
+      const msg = this.tools.gmail.getLastMessageByIndex(idx);
+      if (msg) {
+        try {
+          const result = await this.tools.gmail.readMessage(msg.id);
+          // If it has attachments with images, download and send them
+          if (result.attachments && result.attachments.length > 0) {
+            result._chatId = chatId; // pass for image sending
+            result._bot = this.bot;
+            for (const att of result.attachments) {
+              if (att.mimeType && att.mimeType.startsWith('image/')) {
+                const file = await this.tools.gmail.getAttachment(msg.id, att.id, att.filename);
+                if (file.success) {
+                  await this.bot.sendPhoto(chatId, file.path, { caption: att.filename });
+                }
+              }
+            }
+          }
+          return { tool: 'gmail_open', result };
+        } catch (err) {
+          return { tool: 'gmail_open', result: { success: false, error: err.message } };
+        }
+      }
+      return { tool: 'gmail_open', result: { success: false, error: 'which email. check your mail first.' } };
+    }
+
+    // Star email
+    const starMatch = lower.match(/(?:star)\s+(?:the\s+)?(?:(\d+)(?:st|nd|rd|th)?\s+)?(?:email|mail|message)/);
+    if (starMatch) {
+      const idx = parseInt(starMatch[1] || '1');
+      const msg = this.tools.gmail.getLastMessageByIndex(idx);
+      if (msg) {
+        try {
+          const result = await this.tools.gmail.starMessage(msg.id);
+          return { tool: 'gmail_star', result: { ...result, subject: msg.subject } };
+        } catch (err) {
+          return { tool: 'gmail_star', result: { success: false, error: err.message } };
+        }
+      }
+      return { tool: 'gmail_star', result: { success: false, error: 'which email. check your mail first.' } };
+    }
+
     // Send email triggers
     const emailMatch = text.match(/(?:send|write|email|message|mail|msg)\s+(?:an?\s+)?(?:email|mail|message)?\s*(?:to\s+)?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\s+(?:and\s+)?(?:say|saying|tell|with|that|:)?\s*(.+)/i);
     if (!emailMatch) {

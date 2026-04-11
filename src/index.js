@@ -36,6 +36,14 @@ async function main() {
 
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
+
+  // Prevent crashes from unhandled errors
+  process.on('unhandledRejection', (err) => {
+    console.error('Unhandled rejection:', err.message || err);
+  });
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err.message || err);
+  });
 }
 
 main().catch(err => {

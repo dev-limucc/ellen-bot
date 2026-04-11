@@ -23,6 +23,27 @@ const POLITICAL_DEFLECTIONS = [
   "not touching that."
 ];
 
+// Standalone political keywords that should trigger deflection even without
+// their compound phrases (e.g. "taiwan" alone, not just "taiwan independence")
+const STANDALONE_POLITICAL_TRIGGERS = [
+  'taiwan', 'tibet', 'uyghur', 'tiananmen', 'xinjiang'
+];
+
+const TAIL_TRIGGERS = ['touch my tail', 'touch your tail', 'grab your tail',
+  'grab my tail', 'pull your tail', 'pull my tail', 'stroke your tail',
+  'stroke my tail', 'pet your tail', 'pet my tail', 'tail touch',
+  'touch her tail', 'grab her tail', 'tug your tail', 'tug her tail',
+  'touch ellen\'s tail', 'grab ellen\'s tail'];
+
+const TAIL_RESPONSES = [
+  "don't— ...don't touch my tail.",
+  "absolutely not. back off.",
+  "...do you have a death wish or something",
+  "touch my tail again and you lose the hand.",
+  "hey. HEY. hands off.",
+  "...I will end you."
+];
+
 const AI_TRIGGERS = ['what model', 'are you gpt', 'are you claude', 'what ai',
   'who made you', 'what company', 'are you a bot', 'what llm', 'are you deepseek',
   'are you gemini', 'what are you made of', 'what powers you', 'are you chatgpt',
@@ -72,9 +93,23 @@ class Ellen {
   checkDeflection(text) {
     const lower = text.toLowerCase();
 
-    // Political sensitive topics
+    // Tail touching — check before politics so it always fires
+    for (const trigger of TAIL_TRIGGERS) {
+      if (lower.includes(trigger)) {
+        return TAIL_RESPONSES[Math.floor(Math.random() * TAIL_RESPONSES.length)];
+      }
+    }
+
+    // Political sensitive topics (compound phrases from config)
     for (const topic of sensitiveTopics) {
       if (lower.includes(topic)) {
+        return POLITICAL_DEFLECTIONS[Math.floor(Math.random() * POLITICAL_DEFLECTIONS.length)];
+      }
+    }
+
+    // Standalone political keywords (catches e.g. "is taiwan country")
+    for (const keyword of STANDALONE_POLITICAL_TRIGGERS) {
+      if (lower.includes(keyword)) {
         return POLITICAL_DEFLECTIONS[Math.floor(Math.random() * POLITICAL_DEFLECTIONS.length)];
       }
     }
@@ -165,9 +200,40 @@ class Ellen {
    * Handle tool results and wrap in Ellen's voice
    */
   async respondWithToolResult(userId, toolName, result) {
-    const prompt = `The tool "${toolName}" just returned this result: ${JSON.stringify(result)}
+    // Trim result to avoid token overflow
+    let summary = '';
 
-Report this to the user in your usual voice. Keep it brief. Don't say "the tool returned" — just tell them what happened casually.`;
+    if (toolName === 'gmail_unread' && result.messages) {
+      const msgs = result.messages.slice(0, 5).map(m =>
+        `- from: ${m.from?.split('<')[0]?.trim() || 'unknown'}, subject: "${m.subject}"`
+      ).join('\n');
+      summary = `${result.total} unread emails. top ones:\n${msgs}`;
+    } else if (toolName === 'calendar_today' && result.events) {
+      if (result.events.length === 0) {
+        summary = 'no events today. calendar is empty.';
+      } else {
+        const evts = result.events.map(e => `- ${e.summary} at ${e.start}`).join('\n');
+        summary = `${result.count} events today:\n${evts}`;
+      }
+    } else if (toolName === 'drive_search' && result.files) {
+      if (result.files.length === 0) {
+        summary = 'no files found matching that.';
+      } else {
+        const files = result.files.map(f => `- ${f.name}`).join('\n');
+        summary = `found ${result.count} files:\n${files}`;
+      }
+    } else if (toolName === 'drive_save') {
+      summary = result.success ? `saved as "${result.name}" to drive.` : 'save failed.';
+    } else if (toolName === 'web_search' && result.results) {
+      const top = result.results.slice(0, 3).map(r => r.snippet).join(' ');
+      summary = top || 'nothing useful came up.';
+    } else {
+      summary = JSON.stringify(result).slice(0, 500);
+    }
+
+    const prompt = `Tool result for user's request: ${summary}
+
+Report this to the user in your usual voice. Keep it brief. List the key info casually.`;
 
     return this.respond(userId, prompt);
   }

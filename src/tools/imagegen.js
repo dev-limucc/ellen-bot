@@ -26,7 +26,7 @@ class ImageGenTools {
     });
 
     return new Promise((resolve) => {
-      const url = new URL('https://open.bigmodel.cn/api/paas/v4/images/generations');
+      const url = new URL('https://api.z.ai/api/coding/paas/v4/images/generations');
       const req = https.request({
         hostname: url.hostname,
         path: url.pathname,

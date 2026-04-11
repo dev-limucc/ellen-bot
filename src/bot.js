@@ -42,11 +42,19 @@ class EllenBot {
       }
 
       // Check for tool invocations in natural language
-      const toolResult = await this._checkToolIntent(text);
-      if (toolResult) {
-        const response = await this.ellen.respondWithToolResult(userId, toolResult.tool, toolResult.result);
-        await this.bot.sendMessage(chatId, response);
-        return;
+      try {
+        const toolResult = await this._checkToolIntent(text);
+        if (toolResult) {
+          if (!toolResult.result.success) {
+            await this.bot.sendMessage(chatId, "so. it didn't work. not my fault though.");
+            return;
+          }
+          const response = await this.ellen.respondWithToolResult(userId, toolResult.tool, toolResult.result);
+          await this.bot.sendMessage(chatId, response);
+          return;
+        }
+      } catch (err) {
+        console.error('Tool intent error:', err.message);
       }
 
       // Normal conversation
@@ -264,9 +272,71 @@ mood: tired. as usual.`);
     }
   }
 
-  async _checkToolIntent(_text) {
-    // Natural language tool detection could be added here
-    // For now, tools are invoked via commands
+  async _checkToolIntent(text) {
+    if (!this.googleAuth.isAuthenticated()) return null;
+    const lower = text.toLowerCase();
+
+    // Gmail triggers
+    const gmailTriggers = ['check my mail', 'check my email', 'check my gmail',
+      'read my mail', 'read my email', 'read my gmail', 'any new mail',
+      'any new email', 'unread mail', 'unread email', 'inbox',
+      'check mail', 'check email', 'new emails', 'new messages in mail',
+      'do i have mail', 'do i have email', 'any emails'];
+    if (gmailTriggers.some(t => lower.includes(t))) {
+      try {
+        const result = await this.tools.gmail.getUnread();
+        return { tool: 'gmail_unread', result };
+      } catch (err) {
+        return { tool: 'gmail_unread', result: { success: false, error: err.message } };
+      }
+    }
+
+    // Calendar triggers
+    const calTriggers = ['my schedule', 'my calendar', 'what do i have today',
+      'any meetings', 'any events', "today's schedule", 'what\'s on my calendar',
+      'am i busy', 'am i free', 'what\'s today look like', 'plans for today'];
+    if (calTriggers.some(t => lower.includes(t))) {
+      try {
+        const result = await this.tools.calendar.getToday();
+        return { tool: 'calendar_today', result };
+      } catch (err) {
+        return { tool: 'calendar_today', result: { success: false, error: err.message } };
+      }
+    }
+
+    // Drive search triggers
+    const driveSearchMatch = lower.match(/(?:find|search|look for|where is|find me)\s+(?:the\s+)?(?:file|doc|document|sheet)?\s*(?:called|named|about)?\s*["""]?(.+?)["""]?\s*(?:in|on|from)?\s*(?:drive|google drive)?$/);
+    if (driveSearchMatch) {
+      try {
+        const result = await this.tools.drive.search(driveSearchMatch[1].trim());
+        return { tool: 'drive_search', result };
+      } catch (err) {
+        return { tool: 'drive_search', result: { success: false, error: err.message } };
+      }
+    }
+
+    // Save note triggers
+    const saveMatch = lower.match(/(?:save|note|remember|write down|jot down)\s+(?:this|that)?\s*:?\s*(.+)/);
+    if (saveMatch && (lower.startsWith('save') || lower.startsWith('note') || lower.startsWith('remember') || lower.startsWith('write down') || lower.startsWith('jot down'))) {
+      try {
+        const result = await this.tools.drive.saveNote(saveMatch[1].trim());
+        return { tool: 'drive_save', result };
+      } catch (err) {
+        return { tool: 'drive_save', result: { success: false, error: err.message } };
+      }
+    }
+
+    // Web search triggers
+    const searchMatch = lower.match(/(?:search|look up|google|what is|what's|who is|who's)\s+(.+)/);
+    if (searchMatch && (lower.startsWith('search') || lower.startsWith('look up') || lower.startsWith('google '))) {
+      try {
+        const result = await this.tools.web.search(searchMatch[1].trim());
+        return { tool: 'web_search', result };
+      } catch (err) {
+        return { tool: 'web_search', result: { success: false, error: err.message } };
+      }
+    }
+
     return null;
   }
 
@@ -279,6 +349,10 @@ mood: tired. as usual.`);
   }
 
   async start() {
+    // If Google auth was restored from a saved token, initialize tools now
+    if (this.googleAuth.isAuthenticated()) {
+      this.tools.initGoogle(this.googleAuth);
+    }
     console.log('  Telegram bot connected');
   }
 

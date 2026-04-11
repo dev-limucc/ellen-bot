@@ -1,6 +1,6 @@
 const https = require('https');
 
-const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+const GLM_API_URL = 'https://api.z.ai/api/coding/paas/v4/chat/completions';
 
 class GLMClient {
   constructor(apiKey) {
@@ -9,7 +9,7 @@ class GLMClient {
 
   async chat(messages, options = {}) {
     const body = JSON.stringify({
-      model: options.model || 'glm-4-flash',
+      model: options.model || 'glm-4.5-air',
       messages,
       max_tokens: options.maxTokens || 2048,
       temperature: options.temperature || 0.8,

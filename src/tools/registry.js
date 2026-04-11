@@ -217,7 +217,7 @@ const TOOLS = [
   // ═══ Image Generation ═══
   {
     name: 'generate_image',
-    description: 'Generate an image from a text description. Use when user says "generate an image", "create a picture", "draw", or "make an image of".',
+    description: 'Generate an image from a text description. Use when user says "generate an image", "create a picture", "draw", or "make an image of". IMPORTANT: Never include any AI model names, company names, or "Zenless Zone Zero" in the prompt. If user asks for an image of "you" or "yourself", describe a cool anime girl with silver-white hair, blue eyes, shark-themed accessories, maid-style outfit, aloof expression. Keep prompts purely visual.',
     parameters: {
       type: 'object',
       properties: {

@@ -182,13 +182,25 @@ class Ellen {
         tools: toolDefs.length > 0 ? toolDefs : undefined
       });
 
-      // LLM wants to call a tool
+      // LLM wants to call a tool (proper function calling)
       if (response.type === 'tool_calls' && response.tool_calls) {
         return await this._handleToolCalls(userId, text, response, messages);
       }
 
-      // Regular text response
+      // Check if LLM output tool calls as text (fallback parsing)
       const content = response.content || response;
+      const parsedToolCall = this._parseTextToolCall(content);
+      if (parsedToolCall) {
+        const fakeResponse = {
+          content: '',
+          tool_calls: [{
+            id: 'parsed_' + Date.now(),
+            function: { name: parsedToolCall.name, arguments: JSON.stringify(parsedToolCall.args) }
+          }]
+        };
+        return await this._handleToolCalls(userId, text, fakeResponse, messages);
+      }
+
       this.addToHistory(userId, 'user', text);
       this.addToHistory(userId, 'assistant', content);
       return { type: 'text', content };
@@ -280,6 +292,55 @@ class Ellen {
       this.addToHistory(userId, 'assistant', fallback);
       return { type: 'text', content: fallback };
     }
+  }
+
+  /**
+   * Parse tool calls that the LLM output as text instead of proper function calling
+   */
+  _parseTextToolCall(text) {
+    if (!text) return null;
+
+    // Pattern 1: <tool_call>name\n{"key":"val"}</tool_call>
+    const match1 = text.match(/<tool_call>\s*(\w+)\s*\n?\s*(\{[\s\S]*?\})\s*<\/tool_call>/);
+    if (match1) {
+      try { return { name: match1[1], args: JSON.parse(match1[2]) }; }
+      catch { /* fall through */ }
+    }
+
+    // Pattern 2: tool_call or function name followed by JSON
+    const match2 = text.match(/(?:tool_call|function)[\s:]*(\w+)\s*\(?\s*(\{[\s\S]*?\})\s*\)?/);
+    if (match2) {
+      try { return { name: match2[1], args: JSON.parse(match2[2]) }; }
+      catch { /* fall through */ }
+    }
+
+    // Pattern 3: just a known tool name with arg_key patterns
+    const toolNames = ['gmail_get_unread', 'gmail_send', 'gmail_reply', 'gmail_trash',
+      'gmail_read_message', 'gmail_mark_read', 'gmail_star', 'gmail_search',
+      'calendar_today', 'calendar_upcoming', 'calendar_create_event',
+      'drive_save_note', 'drive_search', 'drive_list_recent',
+      'web_search', 'generate_image', 'reminder_set', 'reminder_list',
+      'reminder_cancel', 'get_current_time'];
+
+    for (const name of toolNames) {
+      if (text.includes(name)) {
+        // Try to extract args from various formats
+        const args = {};
+        const argMatches = text.matchAll(/(?:arg_key|"(\w+)")\s*[=:]\s*"([^"]+)"/g);
+        for (const m of argMatches) {
+          args[m[1] || 'value'] = m[2];
+        }
+        // Also try JSON in the text
+        const jsonMatch = text.match(/\{[\s\S]*?\}/);
+        if (jsonMatch) {
+          try { return { name, args: JSON.parse(jsonMatch[0]) }; }
+          catch { /* use extracted args */ }
+        }
+        return { name, args };
+      }
+    }
+
+    return null;
   }
 
   /**

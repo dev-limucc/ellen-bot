@@ -42,25 +42,17 @@ class EllenBot {
       try {
         const response = await this.ellen.respond(userId, text);
 
-        // Send text response
-        if (response.content) {
-          await this.bot.sendMessage(chatId, response.content);
-        }
-
-        // Send any attachments (images from email, generated images)
-        if (response.attachments) {
-          for (const att of response.attachments) {
-            if (att.type === 'generated_image' && att.url) {
-              await this.bot.sendPhoto(chatId, att.url, { caption: 'here.' });
-            } else if (att.path) {
-              await this.bot.sendDocument(chatId, att.path);
-            }
-          }
-        }
-
-        // Handle image attachments from opened emails
+        // Check if any tool results contain generated images — send as photo
+        let sentImage = false;
         if (response.toolResults) {
           for (const { result } of response.toolResults) {
+            // Generated image
+            if (result.url && result.prompt) {
+              const caption = response.content || 'here.';
+              await this.bot.sendPhoto(chatId, result.url, { caption: caption.slice(0, 1024) });
+              sentImage = true;
+            }
+            // Email attachments
             if (result.attachments) {
               for (const att of result.attachments) {
                 if (att.mimeType?.startsWith('image/') && this.tools.gmail) {
@@ -72,6 +64,11 @@ class EllenBot {
               }
             }
           }
+        }
+
+        // Send text response (skip if we already sent an image with caption)
+        if (response.content && !sentImage) {
+          await this.bot.sendMessage(chatId, response.content);
         }
       } catch (err) {
         console.error('Message handling error:', err.message);

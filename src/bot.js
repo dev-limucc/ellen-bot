@@ -83,7 +83,19 @@ class EllenBot {
 
         // Send text response (skip if we already sent a file with caption)
         if (response.content && !sentFile) {
-          await this.bot.sendMessage(chatId, response.content);
+          // Check if response contains an image URL that should be sent as photo
+          const imageUrlMatch = response.content.match(/(https:\/\/image\.pollinations\.ai\/prompt\/[^\s\])"]+)/);
+          if (imageUrlMatch) {
+            const url = imageUrlMatch[1];
+            const caption = response.content.replace(imageUrlMatch[0], '').replace(/\[?\]?\(?\)?/g, '').trim() || 'here.';
+            try {
+              await this.bot.sendPhoto(chatId, url, { caption: caption.slice(0, 1024) });
+            } catch {
+              await this.bot.sendMessage(chatId, response.content);
+            }
+          } else {
+            await this.bot.sendMessage(chatId, response.content);
+          }
         }
       } catch (err) {
         console.error('Message handling error:', err.message);

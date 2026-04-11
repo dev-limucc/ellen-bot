@@ -42,15 +42,30 @@ class EllenBot {
       try {
         const response = await this.ellen.respond(userId, text);
 
-        // Check if any tool results contain generated images — send as photo
-        let sentImage = false;
+        // Check tool results for files to send
+        let sentFile = false;
         if (response.toolResults) {
           for (const { result } of response.toolResults) {
             // Generated image
             if (result.url && result.prompt) {
               const caption = response.content || 'here.';
               await this.bot.sendPhoto(chatId, result.url, { caption: caption.slice(0, 1024) });
-              sentImage = true;
+              sentFile = true;
+            }
+            // Downloaded video/audio file
+            if (result.path && result.filename && result.success) {
+              const caption = response.content || `here. ${result.filename} (${result.sizeHuman})`;
+              const ext = result.filename.split('.').pop().toLowerCase();
+              if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
+                await this.bot.sendVideo(chatId, result.path, { caption: caption.slice(0, 1024), supports_streaming: true });
+              } else if (['mp3', 'ogg', 'wav', 'flac', 'm4a'].includes(ext)) {
+                await this.bot.sendAudio(chatId, result.path, { caption: caption.slice(0, 1024) });
+              } else {
+                await this.bot.sendDocument(chatId, result.path, { caption: caption.slice(0, 1024) });
+              }
+              sentFile = true;
+              // Cleanup after sending
+              setTimeout(() => { try { require('fs').unlinkSync(result.path); } catch {} }, 30000);
             }
             // Email attachments
             if (result.attachments) {
@@ -66,8 +81,8 @@ class EllenBot {
           }
         }
 
-        // Send text response (skip if we already sent an image with caption)
-        if (response.content && !sentImage) {
+        // Send text response (skip if we already sent a file with caption)
+        if (response.content && !sentFile) {
           await this.bot.sendMessage(chatId, response.content);
         }
       } catch (err) {

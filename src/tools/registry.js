@@ -262,6 +262,45 @@ const TOOLS = [
     execute: async (tools, params) => tools.reminders.cancelReminder(params.position)
   },
 
+  // ═══ Video/Audio Download ═══
+  {
+    name: 'download_video',
+    description: 'Download a video from YouTube, Instagram, TikTok, Twitter/X, Reddit, or other platforms. Use when user shares a link and asks to download it, or says "download this". Supports 1000+ sites.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The video URL to download' },
+        format: { type: 'string', description: '"video" for mp4 (default) or "audio" for mp3' }
+      },
+      required: ['url']
+    },
+    execute: async (tools, params) => tools.downloader.download(params.url, params.format || 'video')
+  },
+  {
+    name: 'download_audio',
+    description: 'Download only the audio/music from a YouTube or other video link as MP3. Use when user asks to download music, audio, song, or mp3.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The video/music URL' }
+      },
+      required: ['url']
+    },
+    execute: async (tools, params) => tools.downloader.download(params.url, 'audio')
+  },
+  {
+    name: 'video_info',
+    description: 'Get info about a video (title, duration, uploader) without downloading it. Use when user asks "what is this video" or wants to know details before downloading.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The video URL' }
+      },
+      required: ['url']
+    },
+    execute: async (tools, params) => tools.downloader.getInfo(params.url)
+  },
+
   // ═══ Utilities ═══
   {
     name: 'get_current_time',
@@ -288,6 +327,8 @@ function getToolDefinitions(availableTools) {
       if (t.name.startsWith('calendar_') && !availableTools.includes('calendar')) return false;
       if (t.name.startsWith('drive_') && !availableTools.includes('drive')) return false;
       if (t.name.startsWith('reminder_') && !availableTools.includes('reminders')) return false;
+      if (t.name.startsWith('download_') && !availableTools.includes('downloader')) return false;
+      if (t.name === 'video_info' && !availableTools.includes('downloader')) return false;
       return true;
     })
     .map(t => ({

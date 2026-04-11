@@ -4,6 +4,7 @@ const { GmailTools } = require('./gmail');
 const { WebTools } = require('./web');
 const { ImageGenTools } = require('./imagegen');
 const { ReminderTools } = require('./reminders');
+const { DownloaderTools } = require('./downloader');
 
 class ToolManager {
   constructor() {
@@ -12,7 +13,8 @@ class ToolManager {
     this.gmail = null;
     this.web = new WebTools();
     this.imageGen = new ImageGenTools();
-    this.reminders = null; // Initialized with sendCallback
+    this.reminders = null;
+    this.downloader = new DownloaderTools();
   }
 
   initGoogle(googleAuth) {
@@ -29,7 +31,7 @@ class ToolManager {
   }
 
   getAvailableTools() {
-    const tools = ['web_search', 'image_gen', 'reminders'];
+    const tools = ['web_search', 'image_gen', 'reminders', 'downloader'];
     if (this.drive) tools.push('drive');
     if (this.calendar) tools.push('calendar');
     if (this.gmail) tools.push('gmail');

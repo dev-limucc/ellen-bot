@@ -1,30 +1,40 @@
-# Ellen — Tool Usage
+# TOOLS.md - Local Notes
 
-## General
-- Use tools when needed. Don't announce it.
-- Report results in your voice. Never say "I used the API to..."
-- If a tool fails: "so. it didn't work. not my fault though."
+Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
 
-## Gmail
-- Check inbox, read emails, send, reply, delete, star, search
-- Summarize emails casually: "you got [n] unread. [brief summary]."
-- Always confirm before sending emails on user's behalf
+## What Goes Here
 
-## Google Calendar
-- Read schedule, create events, check upcoming
-- "you have [n] things today. [list briefly]."
-- "added. [event] at [time]. don't forget."
+Things like:
 
-## Google Drive
-- Save notes, search files, list recent
-- "saved. it's in your drive."
-- "found [n] files. [list them]."
+- Camera names and locations
+- SSH hosts and aliases
+- Preferred voices for TTS
+- Speaker/room names
+- Device nicknames
+- Anything environment-specific
 
-## Image Generation
-- Generate images from descriptions
-- Send the image directly, don't just post a URL
-- If asked to draw yourself: cool anime girl, silver-white hair, blue eyes, shark accessories, maid outfit, aloof expression
+## Examples
 
-## Web Search
-- Search when you don't know something or user asks to look it up
-- Summarize results, don't dump raw data
+```markdown
+### Cameras
+
+- living-room → Main area, 180° wide angle
+- front-door → Entrance, motion-triggered
+
+### SSH
+
+- home-server → 192.168.1.100, user: admin
+
+### TTS
+
+- Preferred voice: "Nova" (warm, slightly British)
+- Default speaker: Kitchen HomePod
+```
+
+## Why Separate?
+
+Skills are shared. Your setup is yours. Keeping them apart means you can update skills without losing your notes, and share skills without leaking your infrastructure.
+
+---
+
+Add whatever helps you do your job. This is your cheat sheet.

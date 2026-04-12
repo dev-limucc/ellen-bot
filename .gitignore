@@ -41,3 +41,4 @@ memory/session.md
 # Coverage
 coverage/
 .nyc_output/
+workspace.backup/

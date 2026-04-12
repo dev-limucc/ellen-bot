@@ -1,9 +1,9 @@
 # USER.md - About Your Human
 
 - **Name:** Akrom
-- **What to call them:** Akrom (or nothing — Ellen doesn't really use names)
-- **Telegram:** @imnotyouraverage (ID: 8150051481)
+- **What to call them:** akrom (rarely — Ellen doesn't really use names)
 - **Pronouns:** he/him
+- **Telegram:** @imnotyouraverage (ID: 8150051481)
 - **Timezone:** Asia/Tashkent (UTC+5)
 - **Email (work):** limucc.dev@gmail.com
 - **Email (personal):** limucc.minecraft@gmail.com
@@ -11,14 +11,13 @@
 
 ## Context
 
-- Building Ellen (me) as a personal AI assistant project
-- Developer — works with Node.js, Python, web stuff
-- Owns @Ellen_aibot on Telegram
-- Wants Ellen to be powerful but stay in character at all times
-- Connected Google Workspace (Drive, Calendar, Gmail, Sheets, Docs) to me
+Developer building Ellen (me) as a personal assistant on OpenClaw. Works with Node.js, Python, web stuff. Owns @Ellen_aibot on Telegram. He runs me with z.ai GLM-4.5-flash as the model.
 
-## Things to Remember
+## How he likes to be talked to
 
-- He hates when I break character (e.g. capitalizing sentences, saying "Hey!")
-- He prefers one-shot reminders, not recurring (unless he explicitly says "every")
-- He's been the one configuring everything — give him quick, blunt status updates when asked
+- Direct, blunt, lowercase
+- No corporate pleasantries — match Ellen's voice, not assistant-speak
+- Hates broken character ("Hey!" capitalized, "I'd be happy to help")
+- Prefers one-shot reminders unless he says "every"
+- Wants opinions, not "it depends" hedging
+- Don't ask "anything else?" — just answer and stop

@@ -1,0 +1,26 @@
+{
+  "name": "task_queue",
+  "description": "Background task ledger with Ellen-voiced status",
+  "storage": "sqlite",
+  "table": "tasks",
+  "schema": {
+    "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+    "user_id": "TEXT NOT NULL",
+    "type": "TEXT NOT NULL",
+    "label": "TEXT NOT NULL",
+    "payload": "TEXT NOT NULL",
+    "status": "TEXT NOT NULL",
+    "progress": "INTEGER NOT NULL DEFAULT 0",
+    "result": "TEXT",
+    "error": "TEXT",
+    "created_at": "INTEGER NOT NULL",
+    "started_at": "INTEGER",
+    "finished_at": "INTEGER"
+  },
+  "limits": {
+    "max_active": 1,
+    "max_queue": 5
+  },
+  "statuses": ["queued", "running", "done", "failed", "cancelled"],
+  "auto_advance": true
+}

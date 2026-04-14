@@ -1,0 +1,24 @@
+{
+  "name": "ellen-bot",
+  "version": "1.0.0",
+  "description": "Ellen Joe AI assistant bot - Telegram + GLM-4-Flash",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test tests/test_*.js",
+    "test:telegram": "node scripts/test_telegram.js",
+    "setup": "bash scripts/setup.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "keywords": ["telegram", "bot", "ellen-joe", "zzz", "glm"],
+  "author": "@imnotyouraverage",
+  "license": "MIT"
+}

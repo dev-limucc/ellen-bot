@@ -1,0 +1,46 @@
+{
+  "agent": {
+    "name": "Ellen",
+    "skill": "skills/ellen/SKILL.md",
+    "core_prompt": "prompts/ellen_core.md",
+    "model": "glm-4-flash",
+    "fallback_model": "claude-haiku-4-5",
+    "memory": {
+      "session": "memory/session.md",
+      "persistent": "memory/MEMORY.md"
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "allowlist",
+      "allowedUsers": ["${OWNER_TELEGRAM_ID}"]
+    }
+  },
+  "model_routing": {
+    "sensitive_topics": [
+      "tiananmen", "天安门", "ccp", "xi jinping", "习近平",
+      "xinjiang", "uyghur", "uighur", "tibet independence",
+      "taiwan independence", "1989 china", "june 4 1989",
+      "hong kong protest 2019", "hong kong 2019"
+    ],
+    "sensitive_model": "claude-haiku-4-5",
+    "default_model": "glm-4-flash"
+  },
+  "flows": {
+    "proactive": "flows/proactive.json",
+    "reminders": "flows/reminders.json",
+    "task_queue": "flows/task_queue.json"
+  },
+  "tools": {
+    "yt_dlp": true,
+    "ffmpeg": true,
+    "web_search": false,
+    "image_gen": false,
+    "google_drive": false,
+    "google_calendar": false,
+    "gmail": false,
+    "instagram": false
+  }
+}

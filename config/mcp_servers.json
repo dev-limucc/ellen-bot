@@ -1,0 +1,55 @@
+{
+  "$comment": "MCP server slots. Marked enabled=false until credentials are wired. Real packages will be plugged in when the user provides tokens; until then these are config stubs the bot reads at startup.",
+  "servers": {
+    "google_drive": {
+      "enabled": false,
+      "purpose": "upload, download, search, save files; natural-language file finding",
+      "auth": "google_oauth_refresh_token",
+      "env": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"]
+    },
+    "google_calendar": {
+      "enabled": false,
+      "purpose": "create events, read schedule, set reminders, daily briefing",
+      "auth": "google_oauth_refresh_token",
+      "env": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"]
+    },
+    "gmail": {
+      "enabled": false,
+      "purpose": "read, draft, send",
+      "auth": "google_oauth_refresh_token",
+      "env": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"]
+    },
+    "instagram": {
+      "enabled": false,
+      "purpose": "read DMs, post (always confirm with user first), check notifications",
+      "auth": "long_lived_access_token",
+      "env": ["INSTAGRAM_ACCESS_TOKEN"]
+    },
+    "image_gen": {
+      "enabled": false,
+      "purpose": "generate images from prompt; runs as background task; notifies on completion",
+      "env": ["IMAGE_API_KEY"]
+    },
+    "web_search": {
+      "enabled": false,
+      "purpose": "general search, news lookup, fact checking",
+      "env": ["SEARCH_API_KEY"]
+    },
+    "yt_dlp": {
+      "enabled": true,
+      "purpose": "download audio/video from 1000+ sites; background task; saves to ~/ellen-bot/downloads/",
+      "binary": "yt-dlp",
+      "modes": ["audio", "best"]
+    },
+    "ffmpeg": {
+      "enabled": true,
+      "purpose": "compress, convert, extract audio; chains with yt-dlp",
+      "binary": "ffmpeg"
+    },
+    "composio": {
+      "enabled": false,
+      "purpose": "umbrella connector for 100+ SaaS tools",
+      "env": ["COMPOSIO_API_KEY"]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "proactive_checkin",
+  "description": "Random tired check-ins from Ellen after silence",
+  "trigger": {
+    "type": "silence",
+    "min_silence_minutes": 180
+  },
+  "constraints": {
+    "active_hours": { "start": "08:00", "end": "22:00" },
+    "min_gap_minutes": 60,
+    "timezone": "local"
+  },
+  "messages": [
+    "huh? still there?",
+    "...you forgot about me huh. whatever.",
+    "hey. need anything or nah",
+    "*yawns* just checking. don't read into it.",
+    "you had that thing. did you do it.",
+    "huh? any help needed",
+    "...I'm here if you need me. not that I was waiting.",
+    "still alive? good."
+  ],
+  "shark_facts": [
+    "sharks have existed longer than trees. older than rings on saturn. think about that.",
+    "some sharks glow in the dark. biofluorescent. it's a flex.",
+    "shark skin is basically tiny teeth. denticles. don't pet one.",
+    "great whites can detect a drop of blood in 100 liters of water. show off.",
+    "cookiecutter sharks bite circles out of bigger fish. ...iconic.",
+    "sharks can detect electromagnetic fields. ampullae of Lorenzini. fancy name for cheating.",
+    "the greenland shark lives 400+ years. doesn't even try."
+  ],
+  "shark_fact_chance": 0.25
+}

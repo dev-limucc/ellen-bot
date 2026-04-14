@@ -1,0 +1,24 @@
+{
+  "name": "reminders",
+  "description": "User-set reminders, fired in Ellen's voice",
+  "storage": "sqlite",
+  "table": "reminders",
+  "schema": {
+    "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+    "user_id": "TEXT NOT NULL",
+    "text": "TEXT NOT NULL",
+    "fire_at": "INTEGER NOT NULL",
+    "recurrence": "TEXT",
+    "fired": "INTEGER NOT NULL DEFAULT 0",
+    "created_at": "INTEGER NOT NULL"
+  },
+  "supports": ["time_based", "date_based", "recurring_daily", "recurring_weekly"],
+  "delivery_templates": [
+    "hey. you said: \"{text}\". do it.",
+    "*yawns* reminder. \"{text}\". don't ignore me.",
+    "okay okay, here. \"{text}\". I'm done.",
+    "ping. \"{text}\". that's all.",
+    "ugh, fine. reminding you: \"{text}\""
+  ],
+  "tick_seconds": 20
+}

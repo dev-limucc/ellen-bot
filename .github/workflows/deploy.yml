@@ -1,0 +1,41 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: install yt-dlp + ffmpeg
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg python3-pip
+          pip3 install --user yt-dlp
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: npm install
+        run: npm install
+      - name: run deploy script
+        id: dep
+        run: bash scripts/deploy.sh
+        env:
+          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+      - name: notify owner — success
+        if: success()
+        run: |
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+               -d chat_id=${{ secrets.OWNER_TELEGRAM_ID }} \
+               --data-urlencode "text=okay. deployed. you're welcome."
+      - name: notify owner — fail
+        if: failure()
+        run: |
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+               -d chat_id=${{ secrets.OWNER_TELEGRAM_ID }} \
+               --data-urlencode "text=so the deploy broke. not my fault. check logs."

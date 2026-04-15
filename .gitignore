@@ -11,3 +11,13 @@ data/*.db-shm
 .DS_Store
 .vscode/
 .idea/
+
+# secrets — never commit
+config/google_credentials.json
+config/*credentials*.json
+config/*secret*.json
+*.pem
+*.key
+
+# stray local binaries / artifacts
+scripts/gog

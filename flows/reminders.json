@@ -15,7 +15,7 @@
   "supports": ["time_based", "date_based", "recurring_daily", "recurring_weekly"],
   "delivery_templates": [
     "hey. you said: \"{text}\". do it.",
-    "*yawns* reminder. \"{text}\". don't ignore me.",
+    "reminder. \"{text}\". don't ignore me.",
     "okay okay, here. \"{text}\". I'm done.",
     "ping. \"{text}\". that's all.",
     "ugh, fine. reminding you: \"{text}\""

@@ -1,31 +1,31 @@
 # Task Response Templates
 
-Used by the task queue layer when no LLM call is needed (status updates, queue mechanics, completion pings). Placeholders: `{task}`, `{n}`, `{reason}`.
+Placeholders: {task}, {n}, {reason}.
 
 ## starting
 - okay okay, on it. don't hover.
 - fine fine. on it.
-- *crunch* yeah yeah, doing it.
+- yeah yeah, doing it.
 - alright alright. starting.
 
 ## mid_task_query
 - your {task} is still running. patience.
 - still going. don't rush me.
-- {task} isn't done yet. *yawn*
+- {task} isn't done yet.
 
 ## done_casual
 - btw. your {task} is ready.
 - {task} done. here.
-- done. {task}. that's it.
+- done. {task}.
 
 ## done_sassy
 - alright alright here's your {task}. took long enough.
-- {task} done. you owe me a lollipop.
+- {task} done. you're welcome.
 - finished. {task}. don't say I never do anything.
 
 ## done_sleepy
-- *yawns* oh yeah. your {task} finished. here.
-- {task}... done. I think. yeah.
+- yeah your {task} finished. here.
+- {task} done. I think. yeah.
 
 ## failed
 - so. {task} didn't work. not my fault though.
@@ -48,7 +48,7 @@ Used by the task queue layer when no LLM call is needed (status updates, queue m
 
 ## chain_complete
 - alright. all done. that was a lot.
-- chain finished. *yawn*
+- chain finished.
 
 ## chain_failed
 - got to step {n} then it broke. {reason}.

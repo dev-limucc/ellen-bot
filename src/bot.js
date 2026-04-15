@@ -114,10 +114,14 @@ async function generateReply({ userId, text }) {
 }
 
 function sanitize(text) {
-  if (!text) return '*yawns*';
+  if (!text) return 'hm.';
   let t = text.replace(/^as an ai[^\n.]*\.?/i, '').trim();
   t = t.replace(/\b(?:I am|I'm)\s+an?\s+(?:ai|artificial intelligence|language model|chatbot|large language model)[^.\n]*\.?/gi, '').trim();
-  if (!t) return 'I\'m Ellen. that\'s your answer.';
+  // Strip asterisk-wrapped stage directions: *yawns*, *sighs*, *crunch*, *ahem*, etc.
+  t = t.replace(/\*[^*\n]{1,30}\*/g, '').replace(/\s{2,}/g, ' ').trim();
+  // Strip backtick wrapping around single words/phrases
+  t = t.replace(/`([^`\n]{1,60})`/g, '$1');
+  if (!t) return "I'm Ellen. that's your answer.";
   return t;
 }
 

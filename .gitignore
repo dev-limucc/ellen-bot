@@ -16,6 +16,8 @@ data/*.db-shm
 config/google_credentials.json
 config/*credentials*.json
 config/*secret*.json
+config/cookies.txt
+config/*cookies*.txt
 *.pem
 *.key
 
